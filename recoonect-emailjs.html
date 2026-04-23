@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Recoonect — Espace membres</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --rc-navy: #16427c;
+  --rc-blue: #3995b5;
+  --rc-grad: linear-gradient(180deg, #16427c 0%, #3995b5 100%);
+  --rc-grad-h: linear-gradient(90deg, #16427c 0%, #3995b5 100%);
+  --white: #ffffff;
+  --bg: #f0f4f8;
+  --surface: #ffffff;
+  --surface2: #f5f8fb;
+  --border: rgba(22,66,124,0.12);
+  --border-strong: rgba(22,66,124,0.22);
+  --text: #0e2a4e;
+  --text-muted: #6b87a8;
+  --text-light: #a0b4c8;
+  --success-bg: #e8f5e0; --success: #2e7d32; --success-border: rgba(46,125,50,0.25);
+  --warning-bg: #fff8e1; --warning: #e65100; --warning-border: rgba(230,81,0,0.25);
+  --danger-bg: #fdecea;  --danger: #c62828;  --danger-border: rgba(198,40,40,0.25);
+  --info-bg: #e3f0fb;    --info: #16427c;    --info-border: rgba(22,66,124,0.25);
+  --radius: 10px; --radius-lg: 14px;
+  --shadow: 0 2px 12px rgba(22,66,124,0.08);
+  --shadow-lg: 0 4px 24px rgba(22,66,124,0.13);
+  --font: 'Source Sans 3', -apple-system, sans-serif;
+}
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; }
+.hidden { display: none !important; }
+.amount-ok { color: var(--success); font-weight: 600; }
+.empty { padding: 2.5rem; text-align: center; color: var(--text-muted); font-size: 14px; }
+
+/* LOADER */
+#loader { position: fixed; inset: 0; background: var(--rc-grad); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; gap: 1.5rem; }
+.spinner { width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.25); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#loader p { color: rgba(255,255,255,0.7); font-size: 14px; font-weight: 300; }
+
+/* LOGO */
+.rc-logo { display: flex; align-items: center; gap: 10px; }
+.rc-logo svg { width: 34px; height: 34px; }
+.rc-logo .wm { font-size: 20px; font-weight: 600; color: white; letter-spacing: -0.3px; }
+.rc-logo.lg svg { width: 48px; height: 48px; }
+.rc-logo.lg .wm { font-size: 28px; }
+
+/* AUTH */
+.auth-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; background: var(--rc-grad); }
+.auth-hero { text-align: center; margin-bottom: 2rem; }
+.auth-hero .slogan { font-size: 15px; font-weight: 300; font-style: italic; color: rgba(255,255,255,0.75); margin-top: 8px; }
+.auth-card { background: white; border-radius: var(--radius-lg); padding: 2rem; width: 100%; max-width: 400px; box-shadow: var(--shadow-lg); }
+.auth-title { font-size: 20px; font-weight: 600; color: var(--rc-navy); margin-bottom: 1.5rem; }
+.field { margin-bottom: 14px; }
+.field label, .form-group label { font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+input, select { width: 100%; padding: 10px 13px; font-size: 14px; font-family: var(--font); background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius); color: var(--text); outline: none; transition: border-color 0.15s; }
+input:focus, select:focus { border-color: var(--rc-blue); background: white; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.btn-primary { width: 100%; background: var(--rc-grad-h); color: white; border: none; border-radius: var(--radius); padding: 12px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; font-family: var(--font); }
+.btn-primary:hover { opacity: 0.9; }
+.btn-primary.sm { width: auto; margin-top: 0; padding: 9px 20px; font-size: 13px; }
+.btn-secondary { background: var(--surface2); border: 1.5px solid var(--border-strong); border-radius: var(--radius); padding: 9px 16px; font-size: 13px; cursor: pointer; color: var(--text); font-family: var(--font); font-weight: 600; }
+.btn-secondary:hover { background: #e8eef5; }
+.btn-ghost { background: none; border: none; color: var(--rc-blue); font-size: 13px; cursor: pointer; font-family: var(--font); font-weight: 600; text-decoration: underline; padding: 0; }
+.btn-edit { background: var(--info-bg); border: 1px solid var(--info-border); border-radius: 7px; padding: 5px 11px; font-size: 12px; cursor: pointer; color: var(--info); font-family: var(--font); font-weight: 600; }
+.btn-delete { background: var(--danger-bg); border: 1px solid var(--danger-border); border-radius: 7px; padding: 5px 11px; font-size: 12px; cursor: pointer; color: var(--danger); font-family: var(--font); font-weight: 600; }
+.btn-add { background: var(--rc-grad-h); color: white; border: none; border-radius: var(--radius); padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font); display: inline-flex; align-items: center; gap: 6px; }
+.auth-switch { text-align: center; font-size: 13px; color: var(--text-muted); margin-top: 14px; }
+
+/* NOTICES */
+.notice { border-radius: var(--radius); padding: 10px 14px; font-size: 13px; margin-bottom: 12px; }
+.n-info    { background: var(--info-bg);    border: 1px solid var(--info-border);    color: var(--info); }
+.n-error   { background: var(--danger-bg);  border: 1px solid var(--danger-border);  color: var(--danger); }
+.n-success { background: var(--success-bg); border: 1px solid var(--success-border); color: var(--success); }
+
+/* TOPBAR */
+.topbar { background: var(--rc-grad-h); padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 58px; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 8px rgba(22,66,124,0.18); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-user { font-size: 13px; color: rgba(255,255,255,0.85); font-weight: 300; }
+.btn-logout { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 7px; padding: 6px 13px; font-size: 12px; cursor: pointer; color: white; font-family: var(--font); font-weight: 600; }
+.btn-logout:hover { background: rgba(255,255,255,0.25); }
+
+/* BADGES */
+.badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; display: inline-block; }
+.badge-pro-tb  { background: rgba(255,255,255,0.22); color: white; border: 1px solid rgba(255,255,255,0.35); }
+.badge-aab-tb  { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.9); border: 1px solid rgba(255,255,255,0.25); }
+.badge-admin-tb{ background: rgba(255,255,255,0.2);  color: white; border: 1px solid rgba(255,255,255,0.35); }
+.badge-pro  { background: var(--info-bg); color: var(--rc-navy); border: 1px solid var(--info-border); }
+.badge-aab  { background: #e8f0fe; color: #3949ab; border: 1px solid rgba(57,73,171,0.2); }
+
+/* TABS */
+.tabs-bar { background: white; border-bottom: 1.5px solid var(--border); display: flex; overflow-x: auto; padding: 0 1rem; }
+.tab-btn { padding: 14px 20px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; background: none; color: var(--text-muted); border-bottom: 3px solid transparent; white-space: nowrap; font-family: var(--font); margin-bottom: -1.5px; }
+.tab-btn.active { color: var(--rc-navy); border-bottom-color: var(--rc-blue); }
+.tab-content { padding: 1.5rem; max-width: 960px; margin: 0 auto; }
+
+/* STAT CARDS */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+.stat-card { background: white; border-radius: var(--radius-lg); padding: 16px 18px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+.stat-label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+.stat-value { font-size: 26px; font-weight: 600; color: var(--text); line-height: 1; }
+.stat-value.blue { background: var(--rc-grad-h); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.stat-sub { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+
+/* SECTION CARD */
+.section-card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 1.25rem; overflow: hidden; }
+.section-head { padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 600; color: var(--rc-navy); display: flex; justify-content: space-between; align-items: center; }
+.inner { padding: 1.25rem; }
+
+/* TABLE */
+.rc-table { width: 100%; font-size: 13px; border-collapse: collapse; table-layout: fixed; }
+.rc-table th { padding: 10px 14px; color: var(--text-muted); font-weight: 600; text-align: left; border-bottom: 1px solid var(--border); background: var(--surface2); font-size: 11px; letter-spacing: 0.4px; text-transform: uppercase; }
+.rc-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rc-table tr:last-child td { border-bottom: none; }
+.rc-table tr:hover td { background: #f7fafd; }
+
+/* STATUS */
+.status-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; cursor: pointer; display: inline-block; }
+.s-pending { background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning-border); }
+.s-paid    { background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); }
+
+/* REF BOX */
+.ref-box { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 1.25rem; }
+.ref-box-title { font-size: 16px; font-weight: 600; color: var(--rc-navy); margin-bottom: 6px; }
+.ref-link-row { display: flex; gap: 10px; margin-top: 12px; }
+.ref-link-input { flex: 1; font-size: 12px; font-family: monospace; }
+.copy-btn { flex-shrink: 0; background: var(--rc-grad-h); color: white; border: none; border-radius: var(--radius); padding: 10px 18px; font-size: 13px; cursor: pointer; font-family: var(--font); font-weight: 600; }
+
+/* AVATAR */
+.avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; background: var(--rc-grad); color: white; }
+
+/* MEMBER ROW */
+.member-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.member-row:last-child { border-bottom: none; }
+.member-info { flex: 1; min-width: 0; }
+.member-name { font-size: 14px; font-weight: 600; color: var(--rc-navy); }
+.member-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.member-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(14,42,78,0.45); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 1rem; backdrop-filter: blur(2px); }
+.modal-box { background: white; border-radius: var(--radius-lg); padding: 1.75rem; width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); }
+.modal-title { font-size: 18px; font-weight: 600; color: var(--rc-navy); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; }
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.25rem; }
+.form-group { margin-bottom: 14px; }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+@media (max-width: 520px) {
+  .form-row { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .tab-content { padding: 1rem 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="rc-logo lg" style="justify-content:center;">
+    <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="4" y="14" width="34" height="38" rx="7" stroke="white" stroke-width="4.5"/>
+      <rect x="22" y="8" width="34" height="38" rx="7" stroke="white" stroke-width="4.5" fill="rgba(255,255,255,0.15)"/>
+    </svg>
+    <span class="wm">Recoonect</span>
+  </div>
+  <div class="spinner"></div>
+  <p>Chargement de votre espace...</p>
+</div>
+
+<div id="app" class="hidden">
+
+  <!-- AUTH -->
+  <div id="auth-view" class="auth-screen">
+    <div class="auth-hero">
+      <div class="rc-logo lg" style="justify-content:center;margin-bottom:8px;">
+        <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="14" width="34" height="38" rx="7" stroke="white" stroke-width="4.5"/>
+          <rect x="22" y="8" width="34" height="38" rx="7" stroke="white" stroke-width="4.5" fill="rgba(255,255,255,0.15)"/>
+        </svg>
+        <span class="wm">Recoonect</span>
+      </div>
+      <div class="slogan">Votre réseau, votre succès</div>
+    </div>
+
+    <div class="auth-card" id="login-panel">
+      <div class="auth-title">Connexion</div>
+      <div id="ref-notice"  class="notice n-info hidden"></div>
+      <div id="login-error" class="notice n-error hidden"></div>
+      <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="vous@exemple.fr" /></div>
+      <div class="field"><label>Mot de passe</label><input type="password" id="login-pwd" placeholder="••••••••" /></div>
+      <button class="btn-primary" onclick="doLogin()">Se connecter</button>
+      <div class="auth-switch">Pas encore membre ? <button class="btn-ghost" onclick="showRegister()">S'inscrire</button></div>
+    </div>
+
+    <div class="auth-card hidden" id="register-panel">
+      <div class="auth-title">Créer mon compte</div>
+      <div id="ref-notice-reg" class="notice n-info hidden"></div>
+      <div id="reg-error"      class="notice n-error hidden"></div>
+      <div class="form-row">
+        <div class="field"><label>Prénom</label><input type="text" id="reg-prenom" placeholder="Jean" /></div>
+        <div class="field"><label>Nom</label><input type="text" id="reg-nom" placeholder="Dupont" /></div>
+      </div>
+      <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="vous@exemple.fr" /></div>
+      <div class="field"><label>Mot de passe</label><input type="password" id="reg-pwd" placeholder="min. 6 caractères" /></div>
+      <div class="field"><label>Type de membre</label>
+        <select id="reg-type">
+          <option value="pro">Professionnel (800 € HT/an)</option>
+          <option value="aab">Apporteur d'affaires (150 € HT/an)</option>
+        </select>
+      </div>
+      <div class="field"><label>Profession / secteur</label><input type="text" id="reg-metier" placeholder="Ex : Courtier, Agent immobilier..." /></div>
+      <button class="btn-primary" onclick="doRegister()">Créer mon compte</button>
+      <div class="auth-switch">Déjà membre ? <button class="btn-ghost" onclick="showLogin()">Se connecter</button></div>
+    </div>
+  </div>
+
+  <!-- MEMBER VIEW -->
+  <div id="member-view" class="hidden">
+    <div class="topbar">
+      <div class="rc-logo">
+        <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="14" width="34" height="38" rx="7" stroke="white" stroke-width="4.5"/><rect x="22" y="8" width="34" height="38" rx="7" stroke="white" stroke-width="4.5" fill="rgba(255,255,255,0.15)"/></svg>
+        <span class="wm">Recoonect</span>
+      </div>
+      <div class="topbar-right">
+        <span class="badge" id="user-badge"></span>
+        <span class="topbar-user" id="user-display-name"></span>
+        <button class="btn-logout" onclick="doLogout()">Déconnexion</button>
+      </div>
+    </div>
+    <div class="tabs-bar">
+      <button class="tab-btn active" onclick="switchTab('dashboard')">Tableau de bord</button>
+      <button class="tab-btn" onclick="switchTab('parrainage')">Parrainage</button>
+      <button class="tab-btn" onclick="switchTab('historique')">Historique</button>
+    </div>
+
+    <div id="tab-dashboard" class="tab-content">
+      <div class="stats-grid" id="member-stats"></div>
+      <div class="section-card">
+        <div class="section-head">Mes commissions récentes</div>
+        <div id="member-commissions-preview"></div>
+      </div>
+      <div class="section-card">
+        <div class="section-head">Mes filleuls récents</div>
+        <div id="member-affilies-preview"></div>
+      </div>
+    </div>
+
+    <div id="tab-parrainage" class="tab-content hidden">
+      <div class="ref-box">
+        <div class="ref-box-title">Mon lien de parrainage</div>
+        <p style="font-size:13px;color:var(--text-muted);">Partagez ce lien pour inviter de nouveaux membres. La prime est créditée automatiquement dès leur inscription.</p>
+        <div class="ref-link-row">
+          <input type="text" class="ref-link-input" id="ref-link-display" readonly />
+          <button class="copy-btn" onclick="copyRefLink()">Copier</button>
+        </div>
+        <div id="copy-confirm" class="hidden" style="font-size:13px;color:var(--success);margin-top:8px;font-weight:600;">✓ Lien copié !</div>
+      </div>
+      <div class="section-card" style="margin-bottom:1.25rem;">
+        <div class="section-head">Barème de parrainage</div>
+        <div class="inner">
+          <table class="rc-table">
+            <thead><tr><th>Profil parrainé</th><th>Prime perçue</th><th>Cotisation filleul</th></tr></thead>
+            <tbody>
+              <tr><td>Professionnel</td><td class="amount-ok">200 € HT</td><td>800 € HT/an</td></tr>
+              <tr><td>Apporteur d'affaires</td><td class="amount-ok">50 € HT</td><td>150 € HT/an</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="section-head">Mes filleuls <span id="filleuls-count" style="font-size:12px;color:var(--text-muted);font-weight:400;"></span></div>
+        <div id="filleuls-list"></div>
+      </div>
+    </div>
+
+    <div id="tab-historique" class="tab-content hidden">
+      <div class="section-card">
+        <div class="section-head">Toutes mes commissions</div>
+        <div id="all-commissions"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN VIEW -->
+  <div id="admin-view" class="hidden">
+    <div class="topbar">
+      <div class="rc-logo">
+        <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="14" width="34" height="38" rx="7" stroke="white" stroke-width="4.5"/><rect x="22" y="8" width="34" height="38" rx="7" stroke="white" stroke-width="4.5" fill="rgba(255,255,255,0.15)"/></svg>
+        <span class="wm">Recoonect</span>
+      </div>
+      <div class="topbar-right">
+        <span class="badge badge-admin-tb">Administration</span>
+        <button class="btn-logout" onclick="doLogout()">Déconnexion</button>
+      </div>
+    </div>
+    <div class="tabs-bar">
+      <button class="tab-btn active" onclick="switchAdminTab('overview')">Vue d'ensemble</button>
+      <button class="tab-btn" onclick="switchAdminTab('membres')">Membres</button>
+      <button class="tab-btn" onclick="switchAdminTab('commissions')">Saisie commissions</button>
+    </div>
+
+    <div id="atab-overview" class="tab-content">
+      <div class="stats-grid" id="admin-stats"></div>
+      <div class="section-card">
+        <div class="section-head">Membres récents</div>
+        <div id="admin-recent-members"></div>
+      </div>
+    </div>
+
+    <div id="atab-membres" class="tab-content hidden">
+      <div class="section-card">
+        <div class="section-head">
+          Tous les membres <span id="total-members-count" style="font-size:12px;color:var(--text-muted);font-weight:400;"></span>
+          <button class="btn-add" onclick="openAddModal()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Ajouter un membre
+          </button>
+        </div>
+        <div id="admin-members-list" style="padding:0 1.25rem;"></div>
+      </div>
+    </div>
+
+    <div id="atab-commissions" class="tab-content hidden">
+      <div class="section-card inner" style="margin-bottom:1.25rem;">
+        <div style="font-size:16px;font-weight:600;color:var(--rc-navy);margin-bottom:1.25rem;">Saisir une commission / CA</div>
+        <div class="form-group"><label>Membre concerné</label><select id="comm-member-select" onchange="updateMemberPreview()"></select></div>
+        <div id="member-preview" class="notice n-info hidden" style="margin-bottom:12px;"></div>
+        <div class="form-row">
+          <div class="form-group"><label>CA généré (€ HT)</label><input type="number" id="comm-ca" placeholder="Ex : 5 000" min="0" step="100" /></div>
+          <div class="form-group"><label>Commission à verser (€ HT)</label><input type="number" id="comm-montant" placeholder="Ex : 250" min="0" step="10" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Description</label><input type="text" id="comm-desc" placeholder="Ex : Dossier client Martin..." /></div>
+          <div class="form-group"><label>Statut</label>
+            <select id="comm-status">
+              <option value="pending">En attente de versement</option>
+              <option value="paid">Versée</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-primary sm" onclick="saveCommission()">Enregistrer la commission</button>
+        <div id="comm-confirm" class="notice n-success hidden" style="margin-top:12px;">✓ Commission enregistrée avec succès.</div>
+      </div>
+      <div class="section-card">
+        <div class="section-head">Commissions récentes <span style="font-size:11px;color:var(--text-muted);font-weight:400;">(cliquer sur le statut pour basculer)</span></div>
+        <div id="admin-commissions-list"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL MEMBRE -->
+<div id="member-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title">Membre</div>
+    <div class="form-row">
+      <div class="form-group"><label>Prénom *</label><input type="text" id="m-prenom" /></div>
+      <div class="form-group"><label>Nom *</label><input type="text" id="m-nom" /></div>
+    </div>
+    <div class="form-group"><label>Email *</label><input type="email" id="m-email" /></div>
+    <div class="form-group"><label>Mot de passe *</label><input type="password" id="m-pwd" placeholder="min. 6 caractères" /></div>
+    <div class="form-row">
+      <div class="form-group"><label>Type *</label>
+        <select id="m-type"><option value="pro">Professionnel</option><option value="aab">Apporteur d'affaires</option></select>
+      </div>
+      <div class="form-group"><label>Statut</label>
+        <select id="m-status"><option value="active">Actif</option><option value="pending">En attente</option><option value="suspended">Suspendu</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Profession / secteur *</label><input type="text" id="m-metier" placeholder="Ex : Courtier, Agent immobilier..." /></div>
+    <div class="form-group"><label>Parrain (optionnel)</label><select id="m-parrain"><option value="">— Aucun parrain —</option></select></div>
+    <div id="modal-error" class="notice n-error hidden"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal()">Annuler</button>
+      <button class="btn-primary sm" onclick="saveMemberModal()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://rrcvspxkfwupuuqcllbm.supabase.co/rest/v1';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyY3ZzcHhrZnd1cHV1cWNsbGJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5Mjk5NzIsImV4cCI6MjA5MjUwNTk3Mn0.zl69WTu0Kjpy2YdRmBxBVE4W1dkbhVKPMy0IVs8qNn8';
+const H = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+
+async function sb(method, table, params='', body=null) {
+  const opts = { method, headers: H };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(SB_URL + '/' + table + params, opts);
+  if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.message || r.statusText); }
+  if (r.status === 204) return null;
+  return r.json();
+}
+const dbGet   = (t,p='')  => sb('GET',t,p);
+const dbPost  = (t,b)     => sb('POST',t,'',b);
+const dbPatch = (t,p,b)   => sb('PATCH',t,p,b);
+const dbDel   = (t,p)     => sb('DELETE',t,p);
+
+let currentUser = null, allMembers = [], editingId = null, isAdd = false;
+let currentTab = 'dashboard', currentAdminTab = 'overview';
+
+const $ = id => document.getElementById(id);
+const show = id => $(id).classList.remove('hidden');
+const hide = id => $(id).classList.add('hidden');
+const setN = (id,txt) => { $(id).textContent = txt; show(id); };
+const clearN = id => hide(id);
+const fmt = n => (n||0).toLocaleString('fr-FR');
+const fmtD = d => new Date(d).toLocaleDateString('fr-FR');
+const uid = () => 'mbr_' + Math.random().toString(36).slice(2,11);
+const refCode = (p,n) => ((p.slice(0,3)+n.slice(0,3)).toUpperCase().replace(/[^A-Z]/g,'')||'RC') + Math.floor(100+Math.random()*900);
+const getRef = () => new URLSearchParams(location.search).get('ref');
+const getBase = () => location.origin + location.pathname;
+
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    allMembers = await dbGet('members','?order=join_date.desc');
+    const rc = getRef();
+    if (rc) {
+      const p = allMembers.find(m=>m.ref_code===rc);
+      if (p) { const msg='Vous avez été invité par '+p.prenom+' '+p.nom+'.'; setN('ref-notice',msg); setN('ref-notice-reg',msg); }
+    }
+  } catch(e) { console.warn(e); }
+  hide('loader'); show('app');
+});
+
+function showRegister() { hide('login-panel'); show('register-panel'); }
+function showLogin()    { show('login-panel'); hide('register-panel'); }
+
+async function doLogin() {
+  const email = $('login-email').value.trim().toLowerCase();
+  const pwd   = $('login-pwd').value;
+  clearN('login-error');
+  try {
+    const rows = await dbGet('members','?email=eq.'+encodeURIComponent(email)+'&pwd=eq.'+encodeURIComponent(pwd)+'&limit=1');
+    if (!rows||!rows.length) { setN('login-error','Email ou mot de passe incorrect.'); return; }
+    currentUser = rows[0];
+    hide('auth-view');
+    if (currentUser.role==='admin') renderAdminView(); else renderMemberView();
+  } catch(e) { setN('login-error','Erreur : '+e.message); }
+}
+
+async function doRegister() {
+  const prenom=$('reg-prenom').value.trim(), nom=$('reg-nom').value.trim();
+  const email=$('reg-email').value.trim().toLowerCase(), pwd=$('reg-pwd').value;
+  const type=$('reg-type').value, metier=$('reg-metier').value.trim();
+  clearN('reg-error');
+  if (!prenom||!nom||!email||!pwd||!metier) { setN('reg-error','Merci de remplir tous les champs.'); return; }
+  if (pwd.length<6) { setN('reg-error','Mot de passe trop court (min. 6 caractères).'); return; }
+  try {
+    const rc=getRef(), parrain=rc?allMembers.find(m=>m.ref_code===rc):null;
+    const id=uid();
+    const member={id,prenom,nom,email,pwd,role:'member',type,metier,ref_code:refCode(prenom,nom),parrain_id:parrain?parrain.id:null,join_date:new Date().toISOString(),status:'active',total_ca:0,total_commissions:0};
+    const created=await dbPost('members',member);
+    if (parrain) {
+      const prime=type==='pro'?200:50;
+      await dbPost('commissions',{id:'c_'+Date.now(),member_id:parrain.id,montant:prime,ca:0,description:(type==='pro'?'Prime parrainage professionnel':'Prime parrainage apporteur')+' — '+prenom+' '+nom,status:'pending',type:'parrainage',created_at:new Date().toISOString()});
+      await dbPatch('members','?id=eq.'+parrain.id,{total_commissions:(parrain.total_commissions||0)+prime});
+      await dbPost('affiliations',{id:'a_'+Date.now(),parrain_id:parrain.id,filleul_id:id,prime,created_at:new Date().toISOString()});
+    }
+    allMembers=await dbGet('members','?order=join_date.desc');
+    currentUser=created[0]||member; hide('auth-view'); renderMemberView();
+  } catch(e) { setN('reg-error',e.message.includes('unique')?'Cet email est déjà utilisé.':'Erreur : '+e.message); }
+}
+
+function doLogout() {
+  currentUser=null; currentTab='dashboard'; currentAdminTab='overview';
+  show('auth-view'); hide('member-view'); hide('admin-view');
+}
+
+// ── MEMBER ──
+function renderMemberView() {
+  show('member-view');
+  const u=currentUser;
+  $('user-display-name').textContent=u.prenom+' '+u.nom;
+  const b=$('user-badge');
+  b.textContent=u.type==='pro'?'Professionnel':"Apporteur d'affaires";
+  b.className='badge '+(u.type==='pro'?'badge-pro-tb':'badge-aab-tb');
+  switchTab(currentTab);
+}
+
+function switchTab(tab) {
+  currentTab=tab;
+  ['dashboard','parrainage','historique'].forEach((t,i)=>{
+    $('tab-'+t).classList.toggle('hidden',t!==tab);
+    document.querySelectorAll('#member-view .tab-btn')[i].classList.toggle('active',t===tab);
+  });
+  if(tab==='dashboard')  renderDashboard();
+  if(tab==='parrainage') renderParrainage();
+  if(tab==='historique') renderHistorique();
+}
+
+async function renderDashboard() {
+  const u=currentUser;
+  const [comms,affiliations,fresh]=await Promise.all([
+    dbGet('commissions','?member_id=eq.'+u.id+'&order=created_at.desc'),
+    dbGet('affiliations','?parrain_id=eq.'+u.id+'&order=created_at.desc'),
+    dbGet('members','?id=eq.'+u.id+'&limit=1')
+  ]);
+  const tG=comms.reduce((s,c)=>s+(c.montant||0),0);
+  const tP=comms.filter(c=>c.status==='pending').reduce((s,c)=>s+(c.montant||0),0);
+  const tV=comms.filter(c=>c.status==='paid').reduce((s,c)=>s+(c.montant||0),0);
+  const tCA=fresh[0]?.total_ca||0;
+  let html=`
+    <div class="stat-card"><div class="stat-label">Total commissions</div><div class="stat-value blue">${fmt(tG)} €</div><div class="stat-sub">HT</div></div>
+    <div class="stat-card"><div class="stat-label">Versées</div><div class="stat-value">${fmt(tV)} €</div><div class="stat-sub">HT</div></div>
+    <div class="stat-card"><div class="stat-label">En attente</div><div class="stat-value">${fmt(tP)} €</div><div class="stat-sub">HT</div></div>
+    <div class="stat-card"><div class="stat-label">Filleuls</div><div class="stat-value">${affiliations.length}</div><div class="stat-sub">parrainés</div></div>
+  `;
+  if(u.type==='pro') html+=`<div class="stat-card"><div class="stat-label">Mon CA total</div><div class="stat-value">${fmt(tCA)} €</div><div class="stat-sub">HT généré</div></div>`;
+  $('member-stats').innerHTML=html;
+
+  const recent=comms.slice(0,5);
+  $('member-commissions-preview').innerHTML=recent.length
+    ?`<table class="rc-table"><thead><tr><th style="width:55%;">Description</th><th style="width:25%;">Montant</th><th style="width:20%;">Statut</th></tr></thead><tbody>${recent.map(c=>`<tr><td>${c.description||'—'}</td><td class="amount-ok">+${fmt(c.montant)} €</td><td><span class="status-badge ${c.status==='paid'?'s-paid':'s-pending'}">${c.status==='paid'?'Versée':'En attente'}</span></td></tr>`).join('')}</tbody></table>`
+    :'<div class="empty">Aucune commission pour l\'instant</div>';
+
+  const recentF=affiliations.slice(0,3);
+  $('member-affilies-preview').innerHTML=recentF.length
+    ?recentF.map(a=>{const f=allMembers.find(m=>m.id===a.filleul_id);return f?`<div style="padding:10px 1.25rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:13px;"><span><strong>${f.prenom} ${f.nom}</strong> <span style="color:var(--text-muted);font-size:11px;">${f.type==='pro'?'Pro':'AAB'}</span></span><span class="amount-ok">+${fmt(a.prime)} € HT</span></div>`:''}).join('')
+    :'<div class="empty">Aucun filleul parrainé pour l\'instant</div>';
+}
+
+async function renderParrainage() {
+  const u=currentUser;
+  $('ref-link-display').value=getBase()+'?ref='+u.ref_code;
+  const aff=await dbGet('affiliations','?parrain_id=eq.'+u.id+'&order=created_at.desc');
+  $('filleuls-count').textContent=aff.length+' filleul'+(aff.length>1?'s':'');
+  $('filleuls-list').innerHTML=aff.length
+    ?aff.map(a=>{const f=allMembers.find(m=>m.id===a.filleul_id);if(!f)return'';const ini=(f.prenom[0]||'')+(f.nom[0]||'');return`<div style="display:flex;align-items:center;gap:12px;padding:11px 1.25rem;border-bottom:1px solid var(--border);"><div class="avatar">${ini}</div><div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;color:var(--rc-navy);">${f.prenom} ${f.nom}</div><div style="font-size:12px;color:var(--text-muted);">${f.metier} · ${f.type==='pro'?'Professionnel':"Apporteur d'affaires"} · ${fmtD(a.created_at)}</div></div><span class="amount-ok" style="flex-shrink:0;">+${fmt(a.prime)} € HT</span></div>`;}).join('')
+    :'<div class="empty">Partagez votre lien pour commencer à parrainer</div>';
+}
+
+function copyRefLink() {
+  navigator.clipboard.writeText($('ref-link-display').value).then(()=>{show('copy-confirm');setTimeout(()=>hide('copy-confirm'),3000);});
+}
+
+async function renderHistorique() {
+  const comms=await dbGet('commissions','?member_id=eq.'+currentUser.id+'&order=created_at.desc');
+  $('all-commissions').innerHTML=comms.length
+    ?`<table class="rc-table"><thead><tr><th style="width:32%;">Description</th><th style="width:14%;">CA</th><th style="width:16%;">Commission</th><th style="width:20%;">Statut</th><th style="width:18%;">Date</th></tr></thead><tbody>${comms.map(c=>`<tr><td>${c.description||'—'}</td><td>${c.ca?fmt(c.ca)+' €':'—'}</td><td class="amount-ok">+${fmt(c.montant)} €</td><td><span class="status-badge ${c.status==='paid'?'s-paid':'s-pending'}">${c.status==='paid'?'Versée':'En attente'}</span></td><td style="color:var(--text-muted);">${fmtD(c.created_at)}</td></tr>`).join('')}</tbody></table>`
+    :'<div class="empty">Aucune commission enregistrée</div>';
+}
+
+// ── ADMIN ──
+async function renderAdminView() {
+  show('admin-view');
+  allMembers=await dbGet('members','?order=join_date.desc');
+  switchAdminTab(currentAdminTab);
+}
+
+function switchAdminTab(tab) {
+  currentAdminTab=tab;
+  ['overview','membres','commissions'].forEach((t,i)=>{
+    $('atab-'+t).classList.toggle('hidden',t!==tab);
+    document.querySelectorAll('#admin-view .tab-btn')[i].classList.toggle('active',t===tab);
+  });
+  if(tab==='overview')    renderAdminOverview();
+  if(tab==='membres')     renderAdminMembres();
+  if(tab==='commissions') renderAdminCommissions();
+}
+
+async function renderAdminOverview() {
+  const all=allMembers.filter(m=>m.role!=='admin');
+  const pros=all.filter(m=>m.type==='pro'), aabs=all.filter(m=>m.type==='aab');
+  const totalCA=all.reduce((s,m)=>s+(m.total_ca||0),0);
+  const comms=await dbGet('commissions','?order=created_at.desc');
+  const tC=comms.reduce((s,c)=>s+(c.montant||0),0);
+  const tP=comms.filter(c=>c.status==='pending').reduce((s,c)=>s+(c.montant||0),0);
+  $('admin-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Membres</div><div class="stat-value blue">${all.length}</div><div class="stat-sub">${pros.length} pros · ${aabs.length} AAB</div></div>
+    <div class="stat-card"><div class="stat-label">CA réseau</div><div class="stat-value blue">${fmt(totalCA)} €</div><div class="stat-sub">HT total</div></div>
+    <div class="stat-card"><div class="stat-label">Commissions totales</div><div class="stat-value">${fmt(tC)} €</div><div class="stat-sub">HT</div></div>
+    <div class="stat-card"><div class="stat-label">En attente versement</div><div class="stat-value">${fmt(tP)} €</div><div class="stat-sub">HT</div></div>
+    <div class="stat-card"><div class="stat-label">Cotisations/an</div><div class="stat-value">${fmt(pros.length*800+aabs.length*150)} €</div><div class="stat-sub">HT estimé</div></div>
+  `;
+  const recent=all.slice(0,8);
+  $('admin-recent-members').innerHTML=recent.length
+    ?`<table class="rc-table"><thead><tr><th style="width:20%;">Membre</th><th style="width:10%;">Type</th><th style="width:20%;">Profession</th><th style="width:16%;">CA</th><th style="width:18%;">Commissions</th><th style="width:16%;">Parrain</th></tr></thead><tbody>${recent.map(m=>{const p=m.parrain_id?allMembers.find(x=>x.id===m.parrain_id):null;return`<tr><td style="font-weight:600;color:var(--rc-navy);">${m.prenom} ${m.nom}</td><td><span class="badge ${m.type==='pro'?'badge-pro':'badge-aab'}">${m.type==='pro'?'Pro':'AAB'}</span></td><td style="color:var(--text-muted);">${m.metier||'—'}</td><td>${fmt(m.total_ca)} €</td><td class="amount-ok">${fmt(m.total_commissions)} €</td><td style="color:var(--text-muted);">${p?p.prenom+' '+p.nom:'—'}</td></tr>`;}).join('')}</tbody></table>`
+    :'<div class="empty">Aucun membre pour l\'instant</div>';
+}
+
+function renderAdminMembres() {
+  const all=allMembers.filter(m=>m.role!=='admin');
+  $('total-members-count').textContent=all.length+' membre'+(all.length>1?'s':'');
+  $('admin-members-list').innerHTML=all.length
+    ?all.map(m=>{const p=m.parrain_id?allMembers.find(x=>x.id===m.parrain_id):null;const ini=(m.prenom[0]||'')+(m.nom[0]||'');return`<div class="member-row"><div class="avatar">${ini}</div><div class="member-info"><div class="member-name">${m.prenom} ${m.nom} <span class="badge ${m.type==='pro'?'badge-pro':'badge-aab'}" style="font-size:10px;vertical-align:middle;">${m.type==='pro'?'Pro':'AAB'}</span></div><div class="member-meta">${m.email} · ${m.metier||'—'}${p?' · Parrain : '+p.prenom+' '+p.nom:''}</div><div class="member-meta">CA : ${fmt(m.total_ca)} € · Commissions : ${fmt(m.total_commissions)} € · Code : ${m.ref_code}</div></div><div class="member-actions"><button class="btn-edit" onclick="openEditModal('${m.id}')">Modifier</button><button class="btn-delete" onclick="deleteMember('${m.id}')">Supprimer</button></div></div>`;}).join('')
+    :'<div class="empty" style="padding:2rem 0;">Aucun membre pour l\'instant</div>';
+}
+
+// ── MODAL ──
+function populateParrainSelect(curParrainId) {
+  const sel=$('m-parrain');
+  const list=allMembers.filter(m=>m.role!=='admin'&&m.id!==editingId);
+  sel.innerHTML='<option value="">— Aucun parrain —</option>'+list.map(m=>`<option value="${m.id}" ${m.id===curParrainId?'selected':''}>${m.prenom} ${m.nom} (${m.type==='pro'?'Pro':'AAB'})</option>`).join('');
+}
+
+function openAddModal() {
+  isAdd=true; editingId=null;
+  $('modal-title').textContent='Ajouter un membre';
+  ['m-prenom','m-nom','m-email','m-pwd','m-metier'].forEach(id=>$(id).value='');
+  $('m-type').value='pro'; $('m-status').value='active';
+  $('m-pwd').placeholder='min. 6 caractères (obligatoire)';
+  populateParrainSelect(null); clearN('modal-error'); show('member-modal');
+}
+
+function openEditModal(id) {
+  isAdd=false; editingId=id;
+  const m=allMembers.find(x=>x.id===id);
+  $('modal-title').textContent='Modifier '+m.prenom+' '+m.nom;
+  $('m-prenom').value=m.prenom; $('m-nom').value=m.nom; $('m-email').value=m.email;
+  $('m-pwd').value=''; $('m-pwd').placeholder='Laisser vide = inchangé';
+  $('m-type').value=m.type; $('m-status').value=m.status||'active'; $('m-metier').value=m.metier||'';
+  populateParrainSelect(m.parrain_id); clearN('modal-error'); show('member-modal');
+}
+
+function closeModal() { hide('member-modal'); }
+
+async function sendWelcomeEmail(prenom, nom, email, pwd, type, refCode) {
+  const appUrl = 'https://recoonect.netlify.app';
+  const typeLabel = type === 'pro' ? 'Professionnel' : "Apporteur d'affaires";
+  const html = `
+    <div style="font-family:'Source Sans 3',Arial,sans-serif;max-width:600px;margin:0 auto;">
+      <div style="background:linear-gradient(90deg,#16427c,#3995b5);padding:32px;border-radius:12px 12px 0 0;text-align:center;">
+        <h1 style="color:white;font-size:26px;margin:0;letter-spacing:-0.5px;">Recoonect</h1>
+        <p style="color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:14px;font-style:italic;">Votre réseau, votre succès</p>
+      </div>
+      <div style="background:#ffffff;padding:32px;border:1px solid #e0eaf4;border-top:none;border-radius:0 0 12px 12px;">
+        <h2 style="color:#16427c;font-size:20px;margin:0 0 16px;">Bienvenue ${prenom} ! 👋</h2>
+        <p style="color:#4a6080;font-size:15px;line-height:1.6;margin:0 0 20px;">
+          Votre compte Recoonect a été créé avec succès. Vous pouvez dès maintenant accéder à votre espace membre pour suivre vos gains et partager votre lien de parrainage.
+        </p>
+        <div style="background:#f5f8fb;border:1px solid #dce8f4;border-radius:10px;padding:20px;margin:0 0 24px;">
+          <p style="margin:0 0 8px;font-size:13px;color:#6b87a8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Vos identifiants</p>
+          <p style="margin:0 0 6px;font-size:15px;color:#0e2a4e;"><strong>Email :</strong> ${email}</p>
+          <p style="margin:0 0 6px;font-size:15px;color:#0e2a4e;"><strong>Mot de passe :</strong> ${pwd}</p>
+          <p style="margin:0;font-size:15px;color:#0e2a4e;"><strong>Profil :</strong> ${typeLabel}</p>
+        </div>
+        <div style="background:#f5f8fb;border:1px solid #dce8f4;border-radius:10px;padding:20px;margin:0 0 28px;">
+          <p style="margin:0 0 8px;font-size:13px;color:#6b87a8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Votre lien de parrainage</p>
+          <p style="margin:0;font-size:13px;color:#16427c;font-family:monospace;word-break:break-all;">${appUrl}?ref=${refCode}</p>
+        </div>
+        <div style="text-align:center;margin-bottom:28px;">
+          <a href="${appUrl}" style="display:inline-block;background:linear-gradient(90deg,#16427c,#3995b5);color:white;text-decoration:none;padding:14px 32px;border-radius:10px;font-size:15px;font-weight:600;">Accéder à mon espace →</a>
+        </div>
+        <hr style="border:none;border-top:1px solid #e0eaf4;margin:0 0 20px;" />
+        <p style="color:#a0b4c8;font-size:12px;text-align:center;margin:0;">
+          Recoonect · Limoges · <a href="${appUrl}" style="color:#3995b5;">recoonect.fr</a>
+        </p>
+      </div>
+    </div>
+  `;
+  try {
+    await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer re_4CZVGP6s_7NvHv5w9ky1yQeUQLsdbcL57', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'Recoonect <noreply@recoonect.fr>',
+        to: [email],
+        subject: 'Bienvenue sur Recoonect — Vos identifiants',
+        html
+      })
+    });
+    console.log('Email de bienvenue envoyé à', email);
+  } catch(e) { console.warn('Erreur envoi email:', e); }
+}
+
+async function saveMemberModal() {
+  const prenom=$('m-prenom').value.trim(), nom=$('m-nom').value.trim();
+  const email=$('m-email').value.trim().toLowerCase(), pwd=$('m-pwd').value;
+  const type=$('m-type').value, status=$('m-status').value, metier=$('m-metier').value.trim();
+  const parrainId=$('m-parrain').value||null;
+  clearN('modal-error');
+  if(!prenom||!nom||!email||!metier){setN('modal-error','Merci de remplir tous les champs obligatoires.');return;}
+  if(isAdd&&!pwd){setN('modal-error','Le mot de passe est obligatoire.');return;}
+  if(isAdd&&pwd.length<6){setN('modal-error','Mot de passe trop court (min. 6 caractères).');return;}
+  try {
+    if(isAdd) {
+      const id=uid();
+      const rc=refCode(prenom,nom);
+      await dbPost('members',{id,prenom,nom,email,pwd,role:'member',type,metier,ref_code:rc,parrain_id:parrainId,join_date:new Date().toISOString(),status,total_ca:0,total_commissions:0});
+      if(parrainId){
+        const parrain=allMembers.find(m=>m.id===parrainId);
+        const prime=type==='pro'?200:50;
+        await dbPost('commissions',{id:'c_'+Date.now(),member_id:parrainId,montant:prime,ca:0,description:(type==='pro'?'Prime parrainage professionnel':'Prime parrainage apporteur')+' — '+prenom+' '+nom,status:'pending',type:'parrainage',created_at:new Date().toISOString()});
+        if(parrain) await dbPatch('members','?id=eq.'+parrainId,{total_commissions:(parrain.total_commissions||0)+prime});
+        await dbPost('affiliations',{id:'a_'+Date.now(),parrain_id:parrainId,filleul_id:id,prime,created_at:new Date().toISOString()});
+      }
+      await sendWelcomeEmail(prenom, nom, email, pwd, type, rc);
+    } else {
+      const upd={prenom,nom,email,type,status,metier,parrain_id:parrainId};
+      if(pwd&&pwd.length>=6) upd.pwd=pwd;
+      await dbPatch('members','?id=eq.'+editingId,upd);
+    }
+    allMembers=await dbGet('members','?order=join_date.desc');
+    closeModal(); renderAdminMembres();
+    if(currentAdminTab==='overview') renderAdminOverview();
+  } catch(e){setN('modal-error',e.message.includes('unique')?'Cet email est déjà utilisé.':'Erreur : '+e.message);}
+}
+
+async function deleteMember(id) {
+  const m=allMembers.find(x=>x.id===id);
+  if(!confirm('Supprimer définitivement '+m.prenom+' '+m.nom+' et toutes ses données ?')) return;
+  await dbDel('members','?id=eq.'+id);
+  allMembers=await dbGet('members','?order=join_date.desc');
+  renderAdminMembres(); renderAdminOverview();
+}
+
+// ── COMMISSIONS ──
+async function renderAdminCommissions() {
+  const members=allMembers.filter(m=>m.role!=='admin');
+  const sel=$('comm-member-select'), prev=sel.value;
+  sel.innerHTML=members.map(m=>`<option value="${m.id}" ${m.id===prev?'selected':''}>${m.prenom} ${m.nom} (${m.type==='pro'?'Pro':'AAB'})</option>`).join('');
+  updateMemberPreview();
+  const comms=await dbGet('commissions','?order=created_at.desc&limit=40');
+  $('admin-commissions-list').innerHTML=comms.length
+    ?`<table class="rc-table"><thead><tr><th style="width:20%;">Membre</th><th style="width:27%;">Description</th><th style="width:12%;">CA</th><th style="width:13%;">Commission</th><th style="width:18%;">Statut</th><th style="width:10%;">Date</th></tr></thead><tbody>${comms.map(c=>{const m=allMembers.find(x=>x.id===c.member_id);return`<tr><td style="font-weight:600;color:var(--rc-navy);">${m?m.prenom+' '+m.nom:'—'}</td><td>${c.description||'—'}</td><td>${c.ca?fmt(c.ca)+' €':'—'}</td><td class="amount-ok">+${fmt(c.montant)} €</td><td><span class="status-badge ${c.status==='paid'?'s-paid':'s-pending'}" onclick="toggleStatus('${c.id}','${c.status}')">${c.status==='paid'?'Versée':'En attente'}</span></td><td style="color:var(--text-muted);">${fmtD(c.created_at)}</td></tr>`;}).join('')}</tbody></table>`
+    :'<div class="empty">Aucune commission saisie</div>';
+}
+
+async function updateMemberPreview() {
+  const id=$('comm-member-select').value;
+  const m=allMembers.find(x=>x.id===id); if(!m) return;
+  const comms=await dbGet('commissions','?member_id=eq.'+id);
+  const total=comms.reduce((s,c)=>s+(c.montant||0),0);
+  const el=$('member-preview');
+  el.innerHTML=`<strong>${m.prenom} ${m.nom}</strong> · ${m.type==='pro'?'Professionnel':"Apporteur d'affaires"} · CA total : <strong>${fmt(m.total_ca)} €</strong> · Commissions totales : <strong>${fmt(total)} €</strong>`;
+  el.classList.remove('hidden');
+}
+
+async function saveCommission() {
+  const memberId=$('comm-member-select').value;
+  const ca=parseFloat($('comm-ca').value)||0;
+  const montant=parseFloat($('comm-montant').value)||0;
+  const desc=$('comm-desc').value.trim();
+  const status=$('comm-status').value;
+  if(!montant){alert('Merci de saisir un montant de commission.');return;}
+  try {
+    await dbPost('commissions',{id:'c_'+Date.now(),member_id:memberId,montant,ca,description:desc||'Commission',status,type:'affaires',created_at:new Date().toISOString()});
+    const m=allMembers.find(x=>x.id===memberId);
+    const upd={total_commissions:(m.total_commissions||0)+montant};
+    if(ca) upd.total_ca=(m.total_ca||0)+ca;
+    await dbPatch('members','?id=eq.'+memberId,upd);
+    allMembers=await dbGet('members','?order=join_date.desc');
+    $('comm-ca').value=''; $('comm-montant').value=''; $('comm-desc').value='';
+    show('comm-confirm'); setTimeout(()=>hide('comm-confirm'),3500);
+    renderAdminCommissions();
+  } catch(e){alert('Erreur : '+e.message);}
+}
+
+async function toggleStatus(commId, cur) {
+  await dbPatch('commissions','?id=eq.'+commId,{status:cur==='paid'?'pending':'paid'});
+  renderAdminCommissions();
+}
+</script>
+</body>
+</html>
