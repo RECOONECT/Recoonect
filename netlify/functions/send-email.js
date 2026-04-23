@@ -1,6 +1,6 @@
 export default async (req) => {
   const { prenom, nom, email, pwd, type, refCode } = await req.json();
-  const appUrl = 'https://inspiring-queijadas-b71601.netlify.app';
+ const appUrl = 'https://recoonect-huu1rod1h-recoonect.vercel.app';
   const typeLabel = type === 'pro' ? 'Professionnel' : "Apporteur d'affaires";
 
   const html = `
